@@ -27,8 +27,17 @@ Node.js + Express quiz app with SQLite, REST APIs, EJS views, and a CLI.
 - Error handling, sessions, compression, helmet, morgan
 - CommonJS + ESM interop example in `src/modules`
 
-### Database configuration ⚠️
-The app is configured to use a MongoDB Atlas URI hardcoded into the server and DB client files (session store and `src/db/mongo.ts`). **This includes credentials** and is insecure for production. Prefer setting `MONGODB_URI` via environment variables or a proper secrets manager and updating `src/db/mongo.ts` and `src/server.ts` accordingly.
+### Database configuration
+- The app reads `MONGODB_URI` from the environment (recommended) and falls back to a local SQLite or `mongodb://127.0.0.1:27017/quizwiz` for development.
+
+- Recommended setup for deployment (Render, Heroku, etc.):
+  1. Add `MONGODB_URI` as a secret / environment variable in your hosting dashboard.
+  2. Set your MongoDB Atlas network access rules to allow your host (or temporarily `0.0.0.0/0` for testing).
+  3. If you encounter TLS handshake errors on the host, you can temporarily set `MONGO_TLS_INSECURE=true` to diagnose. **Do not** leave it enabled in production.
+
+- See `.env.example` for sample variables and debug options.
+
+Login issues or connection failures usually indicate either a wrong connection string, Atlas IP access rules blocking the host, or TLS mismatch; check the app logs for recommended troubleshooting steps.
 
 
 

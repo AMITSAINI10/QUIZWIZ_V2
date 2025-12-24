@@ -39,13 +39,23 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+const tlsAllowInvalidCertificates = process.env.MONGO_TLS_INSECURE === 'true';
+const serverSelectionTimeoutMS = Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 10000;
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
-    // Using MongoDB Atlas for session store (hardcoded URI). See README warning.
-    store: MongoStore.create({ mongoUrl: 'mongodb+srv://amitsaini5865_db_user:123456789@quizwiz.tu5ad7r.mongodb.net/quizwiz?retryWrites=true&w=majority&appName=QuizWiz', ttl: 60 * 60 }),
+    // Use MONGODB_URI from env and forward client options for reliability
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/quizwiz',
+      mongoOptions: {
+        serverSelectionTimeoutMS,
+        tlsAllowInvalidCertificates,
+      },
+      ttl: 60 * 60,
+    }),
     cookie: { secure: false, httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 },
   })
 );
