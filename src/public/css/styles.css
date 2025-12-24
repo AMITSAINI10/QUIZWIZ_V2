@@ -1,0 +1,46 @@
+body {
+  background: radial-gradient(1200px 800px at 10% 10%, #0b132b, #081024 60%, #070d1d);
+  color: #ffffff;
+}
+.card { background: rgba(28, 37, 65, 0.9); border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(4px); color: #ffffff; }
+.navbar-dark { background: rgba(23,34,53,0.95) !important; }
+.btn-primary { background: #5bc0be; border-color: #5bc0be; }
+.btn-outline-secondary { color: #ffffff; border-color: #5bc0be; }
+a { color: #e6fbff; }
+.text-muted { color: rgba(255,255,255,0.7) !important; }
+
+/* Sidebar toggle */
+.sidebar {
+  transition: width .25s ease, transform .25s ease;
+}
+.sidebar-collapsed {
+  transform: translateX(-100%);
+}
+
+/* Larger quiz cards */
+.quiz-card { min-height: 320px; padding: .5rem; }
+.quiz-card .card-title { font-size: 1.75rem; }
+.quiz-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem;
+}
+@media (max-width: 992px) {
+  .quiz-grid { grid-template-columns: 1fr; }
+}
+
+/* Offcanvas (side panel) overrides for dark theme */
+.offcanvas { background: rgba(23, 34, 53, 0.98); color: #ffffff; }
+.list-group-item { color: #ffffff; }
+.list-group-item a { color: #e6fbff; text-decoration: none; }
+.list-group-item a:hover { text-decoration: underline; }
+
+
+/* Logo */
+.site-logo { height: 36px; width: auto; display: inline-block; }
+.navbar-brand .brand-text { font-weight: 700; color: #ffffff; }
+
+/* Better handling for PNG/JPG logos */
+.site-logo { object-fit: contain; border-radius: 6px; }
+
+

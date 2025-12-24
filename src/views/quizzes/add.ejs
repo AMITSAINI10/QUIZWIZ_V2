@@ -1,0 +1,384 @@
+<% layout('layout') -%>
+<h1 class="mb-3">Add New Quiz</h1>
+
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/quizzes/add" id="quiz-form">
+  <div class="card mb-3">
+    <div class="card-body">
+      <h3 class="card-title">Quiz Information</h3>
+      <div class="mb-3">
+        <label for="title" class="form-label">Quiz Title <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="title" name="title" required maxlength="200">
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="3" maxlength="1000"></textarea>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="difficulty" class="form-label">Difficulty <span class="text-danger">*</span></label>
+          <select class="form-select" id="difficulty" name="difficulty" required>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
+          <select class="form-select" id="category_id" name="category_id" required>
+            <option value="">Select a category</option>
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat.id %>"><%= cat.name %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="questions-container">
+    <h3 class="mb-3">Questions</h3>
+    <div id="questions-list"></div>
+    <button type="button" class="btn btn-outline-primary mb-3" id="add-question-btn">Add Question</button>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Create Quiz</button>
+    <a href="/quizzes" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<script>
+let questionCount = 0;
+
+function addQuestion() {
+  questionCount++;
+  const questionHtml = `
+    <div class="card mb-3 question-item" data-question-index="${questionCount}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">Question ${questionCount}</h5>
+          <button type="button" class="btn btn-sm btn-outline-danger remove-question">Remove</button>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Question Text <span class="text-danger">*</span></label>
+          <input type="text" class="form-control question-prompt" name="questions[${questionCount}][prompt]" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Question Type <span class="text-danger">*</span></label>
+          <select class="form-select question-type" name="questions[${questionCount}][type]" required data-question-index="${questionCount}">
+            <option value="single">Single Choice (one correct answer)</option>
+            <option value="multiple">Multiple Choice (one or more correct answers)</option>
+          </select>
+        </div>
+        <div class="choices-container">
+          <label class="form-label">Options (exactly 4 required) <span class="text-danger">*</span></label>
+          ${[1, 2, 3, 4].map(i => `
+            <div class="mb-2 choice-item">
+              <div class="d-flex align-items-center gap-2">
+                <input type="radio" class="form-check-input choice-correct" name="questions[${questionCount}][correct_choice]" value="${i}" data-choice-index="${i}" style="width: 20px; height: 20px; margin: 0; flex-shrink: 0;">
+                <input type="text" class="form-control choice-text" name="questions[${questionCount}][choices][${i}][text]" placeholder="Option ${i}" required data-choice-index="${i}">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <small class="text-muted question-type-hint">Select the radio button for the correct answer</small>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = questionHtml;
+  const questionElement = tempDiv.firstElementChild;
+  document.getElementById('questions-list').appendChild(questionElement);
+  
+  // Initialize question type (default is 'single')
+  const typeSelect = questionElement.querySelector('.question-type');
+  updateQuestionType(questionElement, typeSelect.value);
+  
+  // Add event listener for question type change
+  typeSelect.addEventListener('change', function() {
+    updateQuestionType(questionElement, this.value);
+  });
+}
+
+function updateQuestionType(questionElement, type) {
+  const choices = questionElement.querySelectorAll('.choice-correct');
+  const hint = questionElement.querySelector('.question-type-hint');
+  const questionIndex = questionElement.dataset.questionIndex;
+  
+  if (!choices || choices.length === 0) {
+    console.error('No choice inputs found');
+    return;
+  }
+  
+  // Uncheck all first
+  choices.forEach(choice => choice.checked = false);
+  
+  choices.forEach((choice) => {
+    if (type === 'single') {
+      // Change to radio buttons for single choice
+      choice.type = 'radio';
+      choice.name = `questions[${questionIndex}][correct_choice]`;
+      choice.value = choice.dataset.choiceIndex || choice.value;
+      hint.textContent = 'Select the radio button for the correct answer';
+    } else {
+      // Change to checkboxes for multiple choice
+      choice.type = 'checkbox';
+      choice.name = `questions[${questionIndex}][choices][${choice.dataset.choiceIndex}][is_correct]`;
+      choice.value = 'true';
+      hint.textContent = 'Check the box(es) next to the correct answer(s)';
+    }
+  });
+}
+
+document.getElementById('add-question-btn').addEventListener('click', addQuestion);
+
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-question')) {
+    e.target.closest('.question-item').remove();
+    updateQuestionNumbers();
+  }
+});
+
+function updateQuestionNumbers() {
+  const questions = document.querySelectorAll('.question-item');
+  questions.forEach((q, idx) => {
+    q.querySelector('h5').textContent = `Question ${idx + 1}`;
+  });
+}
+
+document.getElementById('quiz-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const questions = [];
+  const questionItems = document.querySelectorAll('.question-item');
+  
+  if (questionItems.length === 0) {
+    alert('Please add at least one question');
+    return;
+  }
+  
+  let hasError = false;
+  
+  questionItems.forEach((item, qIdx) => {
+    if (hasError) return;
+    
+    const prompt = item.querySelector('.question-prompt').value.trim();
+    if (!prompt) {
+      alert(`Question ${qIdx + 1}: Question text is required`);
+      hasError = true;
+      return;
+    }
+    
+    const type = item.querySelector('.question-type').value;
+    const choices = [];
+    
+    // Get all choice items
+    const choiceItems = item.querySelectorAll('.choices-container .choice-item');
+    
+    if (choiceItems.length !== 4) {
+      alert(`Question ${qIdx + 1}: Exactly 4 options are required`);
+      hasError = true;
+      return;
+    }
+    
+    // For single choice, get the selected radio button value
+    let selectedRadioValue = null;
+    if (type === 'single') {
+      const selectedRadio = item.querySelector('input[type="radio"]:checked');
+      if (selectedRadio) {
+        selectedRadioValue = selectedRadio.value;
+      }
+    }
+    
+    choiceItems.forEach((choiceItem, cIdx) => {
+      if (hasError) return;
+      
+      const textInput = choiceItem.querySelector('.choice-text');
+      const correctInput = choiceItem.querySelector('.choice-correct');
+      
+      if (!textInput || !correctInput) {
+        alert(`Question ${qIdx + 1}: Invalid option structure`);
+        hasError = true;
+        return;
+      }
+      
+      const text = textInput.value.trim();
+      if (!text) {
+        alert(`Question ${qIdx + 1}: All 4 options must be filled`);
+        hasError = true;
+        return;
+      }
+      
+      let isCorrect = false;
+      if (type === 'single') {
+        // For radio buttons, check if this choice index matches the selected radio value
+        const choiceIndex = textInput.dataset.choiceIndex;
+        isCorrect = selectedRadioValue === choiceIndex;
+      } else {
+        // For checkboxes, check if this one is checked
+        isCorrect = correctInput.checked;
+      }
+      
+      // Ensure is_correct is always a boolean
+      choices.push({
+        text: text,
+        is_correct: Boolean(isCorrect)
+      });
+    });
+    
+    if (hasError) return;
+    
+    if (choices.length !== 4) {
+      alert(`Question ${qIdx + 1}: Exactly 4 options are required`);
+      hasError = true;
+      return;
+    }
+    
+    const hasCorrect = choices.some(c => c.is_correct);
+    if (!hasCorrect) {
+      alert(`Question ${qIdx + 1}: At least one option must be marked as correct`);
+      hasError = true;
+      return;
+    }
+    
+    // For single choice, ensure exactly one is correct
+    if (type === 'single') {
+      const correctCount = choices.filter(c => c.is_correct).length;
+      if (correctCount !== 1) {
+        alert(`Question ${qIdx + 1}: Single choice questions must have exactly one correct answer`);
+        hasError = true;
+        return;
+      }
+    }
+    
+    questions.push({ prompt, type, choices });
+  });
+  
+  if (hasError) return;
+  
+  // Validate basic form fields
+  const title = formData.get('title');
+  const categoryId = formData.get('category_id');
+  if (!title || !title.trim()) {
+    alert('Quiz title is required');
+    return;
+  }
+  if (!categoryId) {
+    alert('Please select a category');
+    return;
+  }
+  
+  // Validate that all questions have all choices with is_correct
+  for (let q of questions) {
+    if (!q.choices || q.choices.length !== 4) {
+      alert('Each question must have exactly 4 options');
+      return;
+    }
+    for (let c of q.choices) {
+      if (typeof c.is_correct !== 'boolean') {
+        c.is_correct = Boolean(c.is_correct);
+      }
+      if (typeof c.text !== 'string' || !c.text.trim()) {
+        alert('All option texts must be filled');
+        return;
+      }
+    }
+  }
+  
+  // Build the request body
+  const requestBody = {
+    title: title.trim(),
+    description: formData.get('description') || '',
+    difficulty: formData.get('difficulty') || 'easy',
+    category_id: Number(categoryId),
+    questions: questions
+  };
+  
+  // Debug: log the request body to console
+  console.log('Submitting quiz:', JSON.stringify(requestBody, null, 2));
+  
+  // Submit via fetch to ensure proper JSON handling
+  fetch('/quizzes/add', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json, text/html'
+    },
+    credentials: 'same-origin', // Include cookies for session
+    body: JSON.stringify(requestBody)
+  })
+  .then(async res => {
+    const contentType = res.headers.get('content-type');
+    
+    // Try to parse as JSON first
+    if (contentType && contentType.includes('application/json')) {
+      const data = await res.json();
+      if (data.success && data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
+      if (data.error) {
+        alert('Error: ' + data.error);
+        return;
+      }
+    }
+    
+    // Otherwise, treat as HTML
+    const text = await res.text();
+    
+    // Check if response is HTML error page
+    if (text.includes('Add New Quiz')) {
+      // It's the form page again, likely with an error
+      document.body.innerHTML = text;
+      // Re-initialize the form
+      const script = document.createElement('script');
+      script.textContent = `
+        questionCount = ${questions.length};
+        document.querySelectorAll('.question-item').forEach((item, idx) => {
+          item.dataset.questionIndex = idx + 1;
+          const typeSelect = item.querySelector('.question-type');
+          if (typeSelect) {
+            updateQuestionType(item, typeSelect.value);
+            typeSelect.addEventListener('change', function() {
+              updateQuestionType(item, this.value);
+            });
+          }
+        });
+      `;
+      document.body.appendChild(script);
+      return;
+    }
+    
+    // If we got here and status is ok, redirect
+    if (res.ok || res.status === 200) {
+      // Check for redirect header
+      const location = res.headers.get('Location');
+      if (location) {
+        window.location.href = location;
+        return;
+      }
+      // Otherwise redirect to quizzes list
+      window.location.href = '/quizzes';
+      return;
+    }
+    
+    // Handle errors
+    console.error('Server response:', res.status, text.substring(0, 500));
+    const errorMatch = text.match(/alert-danger[^>]*>([^<]+)/);
+    alert('An error occurred: ' + (errorMatch ? errorMatch[1] : 'Please check the console for details'));
+  })
+  .catch(err => {
+    console.error('Fetch error:', err);
+    alert('Network error: ' + err.message + '. Please check your connection and try again.');
+  });
+});
+
+// Add first question by default
+addQuestion();
+</script>
+

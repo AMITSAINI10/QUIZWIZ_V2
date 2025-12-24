@@ -1,0 +1,72 @@
+<% layout('layout') -%>
+<h1 class="mb-3">Quizzes</h1>
+<div class="quiz-grid">
+  <% quizzes.forEach(q => { %>
+    <div>
+      <div class="card quiz-card">
+        <div class="card-body">
+          <h3 class="card-title"><%= q.title %></h3>
+          <h6 class="card-subtitle mb-2 text-muted"><%= q.category_name %> · <%= q.difficulty %></h6>
+          <p class="card-text"><%= q.description %></p>
+          <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary" href="/quizzes/<%= q.id %>/play">Play</a>
+            <a class="btn btn-outline-info" href="/quizzes/<%= q.id %>/leaderboard">Leaderboard</a>
+            <a class="btn btn-outline-secondary" href="/results/me/quiz/<%= q.id %>">View Scores</a>
+            <% if (typeof q.isCreator !== 'undefined' && q.isCreator) { %>
+              <button class="btn btn-outline-danger btn-sm delete-quiz-btn" data-quiz-id="<%= q.id %>" data-quiz-title="<%= q.title %>">Delete</button>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<script>
+// Add delete functionality for quizzes in the list
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.delete-quiz-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const quizId = this.getAttribute('data-quiz-id');
+      const quizTitle = this.getAttribute('data-quiz-title');
+      if (confirm(`Are you sure you want to delete "${quizTitle}"? This action cannot be undone.`)) {
+        fetch(`/quizzes/${quizId}`, {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin'
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            // Remove the quiz card from the page
+            const quizCard = this.closest('.quiz-card').parentElement;
+            if (quizCard) {
+              quizCard.style.transition = 'opacity 0.3s';
+              quizCard.style.opacity = '0';
+              setTimeout(() => {
+                quizCard.remove();
+                // If no quizzes left, reload page
+                if (document.querySelectorAll('.quiz-card').length === 0) {
+                  window.location.reload();
+                }
+              }, 300);
+            } else {
+              window.location.reload();
+            }
+          } else {
+            alert(data.error || 'Failed to delete quiz');
+          }
+        })
+        .catch(err => {
+          console.error('Error:', err);
+          alert('An error occurred while deleting the quiz');
+        });
+      }
+    });
+  });
+});
+</script>
+

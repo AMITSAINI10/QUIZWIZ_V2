@@ -1,0 +1,71 @@
+<% layout('layout') -%>
+<div class="row align-items-start g-3">
+  <div class="col-12">
+    <h1 class="mb-3">Welcome to QUIZWIZ</h1>
+    <p class="text-muted">Pick a category or jump into a recent quiz.</p>
+  </div>
+
+  <div class="col-12 col-lg-3 d-none d-lg-block">
+    <div id="sidebar" class="card sidebar">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Categories</span>
+        <button id="toggleSidebar" class="btn btn-sm btn-outline-secondary">Hide</button>
+      </div>
+      <ul class="list-group list-group-flush">
+        <% categories.forEach(c => { %>
+          <li class="list-group-item bg-transparent">
+            <a href="/quizzes?category=<%= c.slug %>"><%= c.name %></a>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Offcanvas for mobile -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasCats" aria-labelledby="offcanvasCatsLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="offcanvasCatsLabel">Categories</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <ul class="list-group list-group-flush">
+        <% categories.forEach(c => { %>
+          <li class="list-group-item bg-transparent">
+            <a href="/quizzes?category=<%= c.slug %>"><%= c.name %></a>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-9">
+    <div class="d-lg-none mb-3">
+      <button class="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCats">Categories</button>
+    </div>
+    <div class="quiz-grid">
+      <% quizzes.forEach(q => { %>
+        <div>
+          <div class="card quiz-card">
+            <div class="card-body">
+              <h3 class="card-title"><%= q.title %></h3>
+              <h6 class="card-subtitle mb-2 text-muted"><%= q.category_name %> · <%= q.difficulty %></h6>
+              <p class="card-text"><%= q.description %></p>
+              <a class="btn btn-primary me-2" href="/quizzes/<%= q.id %>/play">Play</a>
+              <a class="btn btn-outline-secondary" href="/results/me/quiz/<%= q.id %>">View Scores</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<script>
+  const toggleBtn = document.getElementById('toggleSidebar');
+  const sidebar = document.getElementById('sidebar');
+  toggleBtn?.addEventListener('click', () => {
+    sidebar.classList.toggle('sidebar-collapsed');
+    toggleBtn.textContent = sidebar.classList.contains('sidebar-collapsed') ? 'Show' : 'Hide';
+  });
+</script>
+
