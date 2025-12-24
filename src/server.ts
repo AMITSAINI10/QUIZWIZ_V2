@@ -44,7 +44,8 @@ app.use(
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/quizwiz', ttl: 60 * 60 }),
+    // Using MongoDB Atlas for session store (hardcoded URI). See README warning.
+    store: MongoStore.create({ mongoUrl: 'mongodb+srv://amitsaini5865_db_user:123456789@quizwiz.tu5ad7r.mongodb.net/quizwiz?retryWrites=true&w=majority&appName=QuizWiz', ttl: 60 * 60 }),
     cookie: { secure: false, httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 },
   })
 );

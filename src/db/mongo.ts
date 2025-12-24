@@ -5,7 +5,9 @@ let database: Db | null = null;
 
 export async function initMongo(): Promise<Db> {
   if (database) return database;
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/quizwiz';
+  // Using MongoDB Atlas directly (credentials hardcoded here as requested).
+  // WARNING: Hardcoding credentials is insecure for production — prefer environment variables or a secrets manager.
+  const uri = 'mongodb+srv://amitsaini5865_db_user:123456789@quizwiz.tu5ad7r.mongodb.net/quizwiz?retryWrites=true&w=majority&appName=QuizWiz';
   client = new MongoClient(uri);
   await client.connect();
   const dbNameFromUri = (() => {

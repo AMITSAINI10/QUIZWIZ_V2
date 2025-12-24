@@ -27,6 +27,9 @@ Node.js + Express quiz app with SQLite, REST APIs, EJS views, and a CLI.
 - Error handling, sessions, compression, helmet, morgan
 - CommonJS + ESM interop example in `src/modules`
 
+### Database configuration ⚠️
+The app is configured to use a MongoDB Atlas URI hardcoded into the server and DB client files (session store and `src/db/mongo.ts`). **This includes credentials** and is insecure for production. Prefer setting `MONGODB_URI` via environment variables or a proper secrets manager and updating `src/db/mongo.ts` and `src/server.ts` accordingly.
+
 
 
 
